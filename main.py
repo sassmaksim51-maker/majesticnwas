@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 import os
 from dotenv import load_dotenv
@@ -18,9 +17,7 @@ from sqlalchemy import select
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Create tables on startup
     await create_tables()
-    # Create admin user if not exists
     await create_admin()
     yield
 
@@ -46,16 +43,19 @@ async def create_admin():
 
 app = FastAPI(title="News Site API", lifespan=lifespan)
 
-# CORS - allow frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Change to your frontend URL in production
+    allow_origins=[
+        "https://frontend-self-psi-44.vercel.app",
+        "http://localhost",
+        "http://127.0.0.1",
+        "null",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Routers
 app.include_router(users.router)
 app.include_router(posts.router)
 app.include_router(likes.router)
@@ -71,6 +71,5 @@ async def root():
 
 @app.get("/api/setup-webhook")
 async def setup_webhook(base_url: str):
-    """Setup Telegram webhook. Call once after deployment."""
     from telegram_bot import set_webhook
     return await set_webhook(base_url)
